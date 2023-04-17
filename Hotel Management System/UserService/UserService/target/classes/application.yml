@@ -1,0 +1,87 @@
+server:
+    port: 8082
+
+spring:
+    application:
+        name: USER-SERVICE
+    datasource:
+        url: jdbc:mysql://localhost:3306/microservices
+        username: root
+        password: Sarthak1008
+        driver-class-name: com.mysql.cj.jdbc.Driver
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.MySQL8Dialect
+    config:
+        import: optional:configserver:http://localhost:8091
+    # profiles:
+    #     active: dev
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri:  https://dev-09064469.okta.com/oauth2/default
+            client:
+                registration:
+                    my-internal-client:
+                        provider: okta
+                        authorization-grant-type: client_credentials
+                        scope: internal
+                        client-id: 0oa93oykgx50xiMyF5d7
+                        client-secret: DOi8zU3TjbfweOpAHEi9JpDVwSFKVC32pQ8DxC7L
+
+                provider:
+                    okta:
+                        issuer-uri:  https://dev-09064469.okta.com/oauth2/default
+
+# eureka:
+#     instance:
+#         hostname: localhost
+#     client:
+#         fetch-registry: true
+#         register-with-eureka: true
+#         service-url:
+#             defaultZone: http://localhost:8761/eureka
+
+management:
+    health:
+        circuitbreakers:
+            enabled: true
+    endpoints:
+        web:
+            exposure:
+                include: health
+    endpoint:
+        health:
+            show-details: always
+
+
+resilience4j:
+    circuitbreaker:
+        instances:
+            ratingHotelBreaker:
+                registerHealthIndicator: true
+                eventConsumerBufferSize: 10
+                failureRateThreshold: 50
+                minimumNumberOfCalls: 5
+                automaticTransitionFromOpenToHalfOpenEnabled: true
+                waitDurationInOpenState: 6s
+                permittedNumberOfCallsInHalfOpenState: 3
+                slidingWindowSize: 10
+                slidingWindowType: COUNT_BASED
+    retry:
+        instances:
+            ratingHotelService:
+                max-attempts: 3
+                wait-duration: 5s
+    rateLimiter:
+        instances:
+            userRateLimiter:
+                limit-refresh-period: 4s
+                limit-for-period: 2
+                timeout-duration: 0s
